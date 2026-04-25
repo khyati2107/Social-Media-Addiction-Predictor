@@ -19,7 +19,6 @@ A behavioral-psychological machine learning system that analyzes user habits and
 ---
 
 ## 🗂️ Project StructureSocial-Media-Addiction-Predictor/
-│
 ├── 01_data_audit.py                  # Audit raw datasets (shape, dtypes, missing values)
 ├── 02_clean_datasets.py              # Clean & standardise both datasets independently
 ├── 03_column_mapping.py              # Build Nusratt ↔ Souvik feature mapping table
@@ -30,21 +29,20 @@ A behavioral-psychological machine learning system that analyzes user habits and
 ├── 08_evaluate_regression.py         # Evaluate regression on Nusratt test set
 ├── 09_domain_shift_analysis.py       # KS + Mann-Whitney tests, distribution plots
 ├── 10_shap_explainability.py         # SHAP feature importance & explainability plots
-├── generate_roc_plots.py             # ROC curves (per-model + combined 2×2 grid)
+├── generate_roc_plots.py             # ROC curves (per-model + combined 2x2 grid)
 ├── app.py                            # Streamlit web application
 ├── run_all.py                        # One-command full pipeline runner
 ├── requirements.txt
 ├── Nusratt.csv                       # Dataset 1 (labeled, training source)
 ├── Souvik.csv                        # Dataset 2 (unlabeled, OOD validation)
 ├── models/                           # Saved model pickle files (auto-generated)
-└── outputs/                          # Metrics, plots, reports (auto-generated)---
-
+└── outputs/                          # Metrics, plots, reports (auto-generated)
 ## 📊 Datasets
 
 | Dataset | Source | Records | Labels |
 |---------|--------|---------|--------|
-| **Nusratt** | [Kaggle — Student Social Media Addiction Analysis](https://www.kaggle.com/datasets/zahranusratt/student-social-media-addiction-analysis-dataset) | ~700 | ✅ `addicted_score` (1–10) |
-| **Souvik** | [Kaggle — Social Media & Mental Health](https://www.kaggle.com/datasets/souvikahmed071/social-media-and-mental-health) | ~480 | ❌ No ground-truth label (OOD validation only) |
+| **Nusratt** | [Kaggle — Student Social Media Addiction Analysis](https://www.kaggle.com/datasets/zahranusratt/student-social-media-addiction-analysis-dataset) | 705 | ✅ `addicted_score` (1–10) |
+| **Souvik** | [Kaggle — Social Media & Mental Health](https://www.kaggle.com/datasets/souvikahmed071/social-media-and-mental-health) | 481 | ❌ No ground-truth label (validation only) |
 
 Nusratt is used for training and in-distribution testing. Souvik is used exclusively as an out-of-distribution (OOD) external validation set. Souvik has no ground-truth addiction labels — proxy labels are generated for reference only and never used in model training.
 
