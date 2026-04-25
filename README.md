@@ -18,7 +18,10 @@ A behavioral-psychological machine learning system that analyzes user habits and
 
 ---
 
-## 🗂️ Project StructureSocial-Media-Addiction-Predictor/
+## Project Structure
+
+```text
+.
 ├── 01_data_audit.py                  # Audit raw datasets (shape, dtypes, missing values)
 ├── 02_clean_datasets.py              # Clean & standardise both datasets independently
 ├── 03_column_mapping.py              # Build Nusratt ↔ Souvik feature mapping table
@@ -37,6 +40,7 @@ A behavioral-psychological machine learning system that analyzes user habits and
 ├── Souvik.csv                        # Dataset 2 (unlabeled, OOD validation)
 ├── models/                           # Saved model pickle files (auto-generated)
 └── outputs/                          # Metrics, plots, reports (auto-generated)
+```
 ## 📊 Datasets
 
 | Dataset | Source | Records | Labels |
