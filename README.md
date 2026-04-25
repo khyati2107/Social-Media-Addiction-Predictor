@@ -151,3 +151,22 @@ Because the two datasets use different survey instruments, an explicit domain sh
 ---
 
 ## 📦 Requirements
+
+pandas>=1.5
+numpy>=1.24
+scikit-learn>=1.2
+imbalanced-learn>=0.10
+xgboost>=1.7
+shap>=0.42
+matplotlib>=3.6
+seaborn>=0.12
+scipy>=1.10
+streamlit==1.56.0
+joblib==1.5.3
+reportlab==4.4.10
+
+---
+
+## 📄 License
+
+This project was developed for academic research at BITS Pilani Dubai Campus. Please cite appropriately if you use this work.
