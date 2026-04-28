@@ -284,6 +284,8 @@ def load_artifacts():
         ("fe_params", "models/fe_params.pkl"),
         ("feat_cols", "models/feature_cols.pkl"),
         ("imputer",   "models/imputer.pkl"),
+        ("reg_model",  "models/reg_xgb.pkl"),  
+        ("scaler_reg", "models/scaler_reg.pkl"),
     ]:
         if os.path.exists(path):
             with open(path, "rb") as f:
@@ -422,7 +424,14 @@ def run_inference(age, usage_hours, mental_health_score, sleep_hours,
         for cls in le.classes_:
             probs[cls] = 1.0 if cls == pred_label else 0.0
 
-    return pred_label, probs, feat_row
+    # ── Regression branch (continuous addiction score 1–10) ───────────────────
+    reg_score = None
+    if "reg_model" in artifacts and "scaler_reg" in artifacts:
+        feat_scaled_reg = artifacts["scaler_reg"].transform(feat_row.values)
+        reg_raw = float(artifacts["reg_model"].predict(feat_scaled_reg)[0])
+        reg_score = round(float(np.clip(reg_raw, 1.0, 10.0)), 1)
+
+    return pred_label, probs, feat_row, reg_score
 
 
 # ═════════════════════════════════════════════════════════════════════════════
@@ -1276,7 +1285,7 @@ elif st.session_state.page == "survey":
 
             with st.spinner("Running XGBoost inference..."):
                 try:
-                    pred_label, probs, feat_row = run_inference(
+                    pred_label, probs, feat_row, reg_score = run_inference(
                         age=float(age),
                         usage_hours=float(avg_daily_usage_hours),
                         mental_health_score=float(mental_health_score),
@@ -1288,12 +1297,14 @@ elif st.session_state.page == "survey":
                         "pred_label":   pred_label,
                         "probs":        probs,
                         "feat_row":     feat_row.to_dict(orient="records")[0],
+                        "reg_score":    reg_score,  
                         "subscores": {
                             "Behavioural Intensity":  beh_subscore,
                             "Psychological Distress": psy_subscore,
                             "Sleep Disturbance":      slp_subscore,
                             "Usage Pattern":          usg_subscore,
                             "Academic Impact":        acad_subscore,
+                            
                         },
                         "core_inputs": {
                             "Age":                age,
@@ -1332,6 +1343,7 @@ elif st.session_state.page == "results":
     feat_vals   = result["feat_row"]
     subscores   = result["subscores"]
     core_inputs = result["core_inputs"]
+    reg_score = result.get("reg_score") 
 
     risk_idx   = LABEL_NAMES.index(pred_label) if pred_label in LABEL_NAMES else 0
     risk_color = LABEL_COLORS[risk_idx]
@@ -1339,8 +1351,8 @@ elif st.session_state.page == "results":
     risk_bg    = LABEL_BG_CSS[risk_idx]
     confidence = probs.get(pred_label, 1.0)
 
+
     # ── Result banner ─────────────────────────────────────────────────────────
-    st.markdown('<div class="pill">📊 Your Results</div>', unsafe_allow_html=True)
     st.markdown(f"""
     <div class="result-banner" style="{risk_bg}">
       <h2 style="color:{risk_color}">{risk_emoji} {pred_label} Addiction Risk</h2>
@@ -1350,6 +1362,34 @@ elif st.session_state.page == "results":
     </div>
     """, unsafe_allow_html=True)
 
+    # ── Continuous addiction score (regression branch) ────────────────────────
+    if reg_score is not None:
+        score_color = "#34d399" if reg_score <= 4 else ("#fbbf24" if reg_score <= 6 else "#f87171")
+        fill_pct = int((reg_score - 1) / 9 * 100)
+        st.markdown(f"""
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-left:4px solid {score_color};
+                    border-radius:12px;padding:16px 22px;margin-bottom:1.2rem;">
+          <div style="font-family:'Syne',sans-serif;font-size:.78rem;font-weight:700;
+                      color:var(--text-muted);letter-spacing:.08em;text-transform:uppercase;
+                      margin-bottom:6px">📊 Continuous Addiction Score (Regression)</div>
+          <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:8px">
+            <span style="font-family:'Syne',sans-serif;font-size:2.4rem;font-weight:800;
+                         color:{score_color};line-height:1">{reg_score}</span>
+            <span style="font-size:.9rem;color:var(--text-muted)">/ 10</span>
+          </div>
+          <div style="background:rgba(255,255,255,0.07);border-radius:4px;height:8px;margin-bottom:8px">
+            <div style="width:{fill_pct}%;height:8px;background:{score_color};
+                        border-radius:4px;transition:width .4s ease"></div>
+          </div>
+          <div style="font-size:.78rem;color:var(--text-muted)">
+            Predicted by XGBoost Regressor on the same 6 engineered features.
+            Complements the classifier — gives continuous severity within the
+            <strong style="color:{score_color}">{pred_label}</strong> band.
+            Scale: 1–4 Low · 5–6 Moderate · 7–10 High.
+          </div>
+        </div>
+        """, unsafe_allow_html=True)
+        
     # ── CHART 1: Class probabilities ──────────────────────────────────────────
     st.markdown("### 📈 Model Class Probabilities")
     st.markdown(
