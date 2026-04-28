@@ -1,8 +1,8 @@
 # 📱 Social Media Addiction Predictor
 
-A behavioral-psychological machine learning system that analyzes user habits and mental health indicators to classify social media addiction risk as **Low / Moderate / High**, with explainable AI (SHAP) and a deployed Streamlit web application.
+A behavioral-psychological machine learning system that analyzes user habits and mental health indicators to classify social media addiction risk as Low / Moderate / High — complemented by a continuous regression branch that predicts a nuanced addiction score from 1–10. Features explainable AI (SHAP) and a deployed Streamlit web application.
 
-> Associated IEEE paper submitted as part of coursework at BITS Pilani Dubai Campus.
+Associated IEEE paper submitted as part of coursework at BITS Pilani Dubai Campus.
 
 ---
 
@@ -69,21 +69,26 @@ Six transferable features are derived from both datasets using parameters **fitt
 
 ## 🤖 Models
 
+## 🤖 Models
+
 ### Classification (Low / Moderate / High)
 - Logistic Regression (L2, balanced class weights)
 - Random Forest (300 estimators, balanced)
 - XGBoost (depth 4, L1+L2 regularisation)
 - SVM (RBF kernel, balanced)
 
-All classifiers use **SMOTE** (training split only) to address class imbalance, with **5-fold stratified cross-validation**.
+All classifiers use SMOTE (training split only) to address class imbalance, with 5-fold stratified cross-validation.
 
-### Regression (Nusratt only — predicts raw `addicted_score` 1–10)
+### Regression — Continuous Severity Score (Nusratt only)
+Predicts a raw `addicted_score` from 1–10, providing granular severity within each classification band.
 - Ridge Regression
 - Random Forest Regressor
-- XGBoost Regressor
+- XGBoost Regressor (deployed in app)
+
+The regression branch runs on the **same 6 engineered features** as the classifier — no additional user input is required. The predicted score is displayed alongside the classification label in the web app, fulfilling the objective of complementing categorical risk output with continuous severity estimation.
 
 ### Explainability
-- **SHAP** (SHapley Additive exPlanations) for global feature importance and individual prediction explanations
+SHAP (SHapley Additive exPlanations) for global feature importance and individual prediction explanations.
 
 ---
 
