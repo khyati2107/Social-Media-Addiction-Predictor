@@ -1,6 +1,5 @@
 """
-01_data_audit.py
-Purpose: Audit raw datasets — shape, dtypes, missing values, value distributions.
+01_data_audit.py Purpose: Audit raw datasets — shape, dtypes, missing values, value distributions.
 """
 
 import pandas as pd
@@ -8,7 +7,7 @@ import os
 
 os.makedirs("outputs", exist_ok=True)
 
-# ── Load ──────────────────────────────────────────────────────────────────────
+# Load 
 nusratt = pd.read_csv("Nusratt.csv")
 souvik  = pd.read_csv("Souvik.csv")
 

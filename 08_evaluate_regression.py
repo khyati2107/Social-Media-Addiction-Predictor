@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
-# ── Load ──────────────────────────────────────────────────────────────────────
+#Load
 test = pd.read_csv("outputs/features_test.csv")
 FEAT_COLS  = pickle.load(open("models/feature_cols.pkl","rb"))
 scaler_reg = pickle.load(open("models/scaler_reg.pkl","rb"))

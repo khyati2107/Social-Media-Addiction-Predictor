@@ -1,9 +1,6 @@
 """
 06_evaluate_classification.py
-Purpose: Evaluate classifiers on:
-  1. Nusratt test set (in-distribution)
-  2. Souvik (out-of-distribution / external validation)
-Clearly separated. Performance gap explicitly reported.
+Purpose: Evaluate classifiers on: Nusratt test set (in-distribution), Souvik (out-of-distribution / external validation)
 Souvik proxy labels created separately, never used as ground truth.
 """
 
@@ -24,7 +21,7 @@ from sklearn.metrics import (
     roc_auc_score
 )
 
-# ── Load ──────────────────────────────────────────────────────────────────────
+#Load
 test  = pd.read_csv("outputs/features_test.csv")
 souv  = pd.read_csv("outputs/features_souvik.csv")
 FEAT_COLS = pickle.load(open("models/feature_cols.pkl","rb"))
@@ -39,7 +36,7 @@ model_names = ["lr","rf","xgb","svm"]
 models = {n: pickle.load(open(f"models/clf_{n}.pkl","rb")) for n in model_names}
 classes = le.classes_
 
-# ── Evaluation helper ─────────────────────────────────────────────────────────
+#Evaluation helper
 def evaluate(model, X, y_true, dataset_label, model_label):
     y_pred = model.predict(X)
     y_prob = model.predict_proba(X) if hasattr(model,"predict_proba") else None
@@ -69,13 +66,13 @@ def evaluate(model, X, y_true, dataset_label, model_label):
             "accuracy": acc, "macro_f1": mac_f1,
             "precision": prec, "recall": rec, "roc_auc": auc}
 
-# ── Run evaluation ────────────────────────────────────────────────────────────
+#Run evaluation
 results = []
 for mn, m in models.items():
     results.append(evaluate(m, X_test, y_test,  "Nusratt_Test", mn.upper()))
 
-# ── Souvik proxy labels (reference only, NOT ground truth) ───────────────────
-# Proxy: bucket avg_daily_usage_hours + behavioral_intensity_index
+#Souvik proxy labels (reference only, NOT ground truth)
+#Proxy: bucket avg_daily_usage_hours + behavioral_intensity_index
 raw_s = pd.read_csv("outputs/souvik_clean.csv")
 def souvik_proxy_label(row):
     score = (row["avg_daily_usage_hours"] / 6.0) * 10   # rough 0-10 scale
@@ -88,13 +85,13 @@ raw_s["proxy_addiction_label"].to_csv("outputs/souvik_proxy_labels.csv", index=F
 print("\n[NOTE] Souvik proxy labels saved. NOT used as ground truth.")
 print("Proxy label distribution:\n", raw_s["proxy_addiction_label"].value_counts())
 
-# Evaluate each model on Souvik with proxy labels (clearly marked)
+#Evaluate each model on Souvik with proxy labels (clearly marked)
 y_souv_proxy = le.transform(raw_s["proxy_addiction_label"].values)
 for mn, m in models.items():
     results.append(evaluate(m, X_souv, y_souv_proxy,
                             "Souvik_OOD_ProxyOnly", mn.upper()))
 
-# ── Performance gap report ────────────────────────────────────────────────────
+#Performance gap report
 df_res = pd.DataFrame(results)
 df_res.to_csv("outputs/classification_metrics.csv", index=False)
 

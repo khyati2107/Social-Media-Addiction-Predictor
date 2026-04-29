@@ -1,20 +1,12 @@
 """
 app.py  —  Social Media Addiction Risk Screener
-Rebuilt from scratch. Architecture:
-  raw user inputs → feature engineering (matching 04_feature_engineering_shared.py)
-  → scaler → clf_xgb.pkl → prediction + probabilities + z-score driver chart.
+Rebuilt from scratch. Architecture: raw user inputs to feature engineering to scaler to clf_xgb.pkl to prediction + probabilities + z-score driver chart.
 
 Model: XGBoost classifier (clf_xgb.pkl) — trained on Nusratt dataset.
 6 engineered features: behavioral_intensity_index, psychological_distress_index,
   sleep_disturbance_proxy, age_norm, is_student, usage_hours_sq.
-
-Subscores (sections A–E) are a UX diagnostic layer only.
-They are NOT injected into the feature engineering pipeline.
-The only subscore used in feature construction is behavioural_intensity
-as a proxy for the `conflicts` variable (flagged explicitly to the user).
-
-Class-conditional stats (for driver chart) are computed from features_train.csv
-if that file is present; otherwise fall back to conservative hardcoded estimates.
+Subscores (sections A-E) are a UX diagnostic layer only.
+Class-conditional stats are computed from features_train.csv
 """
 
 import streamlit as st
@@ -33,14 +25,14 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 
-# ── Page config ───────────────────────────────────────────────────────────────
+#Page config 
 st.set_page_config(
     page_title="Social Media Addiction Risk Screener",
     page_icon="📱",
     layout="centered",
 )
 
-# ── Global CSS ────────────────────────────────────────────────────────────────
+#lobal CSS
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap');
@@ -237,7 +229,7 @@ div.bubble-wrap div[role="radiogroup"] > label:has(input:checked):nth-child(5) >
 </style>
 """, unsafe_allow_html=True)
 
-# ── Constants ─────────────────────────────────────────────────────────────────
+# Constants
 LABEL_NAMES  = ['Low', 'Moderate', 'High']
 LABEL_EMOJI  = ['🟢', '🟡', '🔴']
 LABEL_COLORS = ['#34d399', '#fbbf24', '#f87171']
@@ -265,7 +257,7 @@ CHART_ACCENT    = "#c084fc"
 CHART_GRID      = (0.753, 0.518, 0.988, 0.08)
 CHART_SPINE     = (0.753, 0.518, 0.988, 0.15)
 
-# ── Artifact loading ──────────────────────────────────────────────────────────
+#Artifact loading
 @st.cache_resource
 def load_artifacts():
     errors = []
@@ -339,10 +331,7 @@ class_cond_stats = load_class_cond_stats()
 USING_COMPUTED_STATS = class_cond_stats is not None
 
 
-# ═════════════════════════════════════════════════════════════════════════════
 # HONEST FEATURE ENGINEERING
-# ═════════════════════════════════════════════════════════════════════════════
-
 def build_feature_row(
     age: float,
     avg_daily_usage_hours: float,
@@ -424,7 +413,7 @@ def run_inference(age, usage_hours, mental_health_score, sleep_hours,
         for cls in le.classes_:
             probs[cls] = 1.0 if cls == pred_label else 0.0
 
-    # ── Regression branch (continuous addiction score 1–10) ───────────────────
+    #Regression branch (continuous addiction score 1–10)
     reg_score = None
     if "reg_model" in artifacts and "scaler_reg" in artifacts:
         feat_scaled_reg = artifacts["scaler_reg"].transform(feat_row.values)
@@ -434,15 +423,13 @@ def run_inference(age, usage_hours, mental_health_score, sleep_hours,
     return pred_label, probs, feat_row, reg_score
 
 
-# ═════════════════════════════════════════════════════════════════════════════
-# SUBSCORE CALCULATORS
-# ═════════════════════════════════════════════════════════════════════════════
 
+# SUBSCORE CALCULATORS
 def calc_subscore(*vals: int) -> float:
     return (np.mean(list(vals)) - 1) / 4.0
 
 
-# ── Bubble scale widget ───────────────────────────────────────────────────────
+#Bubble scale widget
 def bubble_scale(label: str, key: str,
                  lo_label="Never", hi_label="Always", default: int = 2) -> int:
     if key not in st.session_state:
@@ -477,7 +464,7 @@ def subscore_bar(emoji: str, label: str, score: float):
     </div>""", unsafe_allow_html=True)
 
 
-# ── Session state init ────────────────────────────────────────────────────────
+#Session state init
 for _k, _v in [("page", "about"), ("result", None), ("scroll_top", False)]:
     if _k not in st.session_state:
         st.session_state[_k] = _v
@@ -502,10 +489,8 @@ def go(page):
     st.rerun()
 
 
-# ═════════════════════════════════════════════════════════════════════════════
-# CHART HELPERS
-# ═════════════════════════════════════════════════════════════════════════════
 
+# CHART HELPERS
 def _fig_base(figsize=(7, 3.5)):
     fig, ax = plt.subplots(figsize=figsize)
     fig.patch.set_facecolor(CHART_BG)
@@ -654,7 +639,7 @@ def generate_diagnostic_pdf(
         subject="Diagnostic Report",
     )
 
-    # ── Colour palette ──────────────────────────────────────────────────────
+    #Colour palette 
     RISK_COLOR = {
         "Low":      colors.HexColor("#34d399"),
         "Moderate": colors.HexColor("#fbbf24"),
@@ -684,7 +669,7 @@ def generate_diagnostic_pdf(
     warn_style    = style("Warn",    fontName="Helvetica-Oblique", fontSize=8,
                           textColor=colors.HexColor("#92400e"), leading=13)
 
-    # ── Table style helper ──────────────────────────────────────────────────
+    #Table style helper
     def base_table_style():
         return TableStyle([
             ("BACKGROUND", (0,0), (-1,0), TEAL),
@@ -704,7 +689,7 @@ def generate_diagnostic_pdf(
     story = []
     PAGE_W = A4[0] - 4*cm   # usable width
 
-    # ── Header ─────────────────────────────────────────────────────────────
+    #Header
     story.append(Paragraph("Social Media Addiction Risk", title_style))
     story.append(Paragraph("Diagnostic Report — Research Prototype", sub_style))
     story.append(HRFlowable(width="100%", thickness=1.5, color=TEAL, spaceAfter=10))
@@ -743,7 +728,7 @@ def generate_diagnostic_pdf(
     story.append(meta_table)
     story.append(Spacer(1, 12))
 
-    # ── Section 1 : Risk Classification Result ──────────────────────────────
+    #Section 1 : Risk Classification Result
     story.append(Paragraph("① RISK CLASSIFICATION RESULT", heading_style))
 
     EMOJI = {"Low": "🟢", "Moderate": "🟡", "High": "🔴"}
@@ -772,7 +757,7 @@ def generate_diagnostic_pdf(
     story.append(rt)
     story.append(Spacer(1, 10))
 
-    # ── Section 2 : Class Probabilities ────────────────────────────────────
+    #Section 2 : Class Probabilities
     story.append(Paragraph("② CLASS PROBABILITIES", heading_style))
 
     BAR_W  = 120
@@ -811,7 +796,7 @@ def generate_diagnostic_pdf(
     story.append(prob_table)
     story.append(Spacer(1, 10))
 
-    # ── Section 3 : Engineered Features ────────────────────────────────────
+    #Section 3 : Engineered Features
     story.append(Paragraph("③ ENGINEERED FEATURE VECTOR", heading_style))
 
     FEAT_FRIENDLY_PDF = {
@@ -847,7 +832,7 @@ def generate_diagnostic_pdf(
     story.append(feat_table)
     story.append(Spacer(1, 10))
 
-    # ── Section 4 : Questionnaire Subscores ────────────────────────────────
+    #Section 4 : Questionnaire Subscores
     story.append(Paragraph("④ QUESTIONNAIRE SUBSCORES", heading_style))
     story.append(Paragraph(
         "Derived from your questionnaire responses. Shown for self-awareness — "
@@ -868,7 +853,7 @@ def generate_diagnostic_pdf(
     story.append(sub_table)
     story.append(Spacer(1, 10))
 
-    # ── Section 5 : Recommendations ────────────────────────────────────────
+    #Section 5 : Recommendations
     RECS_PDF = {
         "Low": [
             ("Stay Consistent", "Healthy habits are fragile. Set a monthly reminder to re-take this screener and track any changes over time."),
@@ -900,7 +885,7 @@ def generate_diagnostic_pdf(
     story.append(rec_table)
     story.append(Spacer(1, 16))
 
-    # ── Disclaimer footer ───────────────────────────────────────────────────
+    #Disclaimer footer
     story.append(HRFlowable(width="100%", thickness=0.5, color=colors.grey, spaceAfter=6))
     story.append(Paragraph(
         "⚠️  DISCLAIMER: This report is produced by a research prototype and is NOT a clinical diagnostic tool. "
@@ -913,9 +898,8 @@ def generate_diagnostic_pdf(
     buf.seek(0)
     return buf.read()
 
-# ═════════════════════════════════════════════════════════════════════════════
+
 # PAGE 1 — LANDING
-# ═════════════════════════════════════════════════════════════════════════════
 if st.session_state.page == "about":
 
     if LOAD_ERRORS:
@@ -1069,9 +1053,9 @@ if st.session_state.page == "about":
             go("survey")
 
 
-# ═════════════════════════════════════════════════════════════════════════════
+
 # PAGE 2 — SURVEY
-# ═════════════════════════════════════════════════════════════════════════════
+
 elif st.session_state.page == "survey":
 
     st.markdown('<div class="pill">📋 Screener Survey</div>', unsafe_allow_html=True)
@@ -1082,9 +1066,9 @@ elif st.session_state.page == "survey":
         unsafe_allow_html=True,
     )
 
-    # ── SECTION 0: Core inputs — FIX 1: all inputs stacked vertically ─────────
+    #SECTION A: Core inputs — FIX 1: all inputs stacked vertically
     st.markdown(
-        '<div class="section-header">🎯 Section 0 — Core Inputs (Model Features)</div>',
+        '<div class="section-header">🎯 Section A — Core Inputs (Model Features)</div>',
         unsafe_allow_html=True,
     )
     st.markdown("""
@@ -1115,9 +1099,9 @@ elif st.session_state.page == "survey":
     )
     sleep_hours = st.slider("Average sleep hours per night", 3.0, 11.0, 7.0, 0.5)
 
-    # ── SECTION A: Behavioural Intensity ──────────────────────────────────────
+    #SECTION B: Behavioural Intensity
     st.markdown(
-        '<div class="section-header">📱 Section A — Behavioural Intensity</div>',
+        '<div class="section-header">📱 Section B — Behavioural Intensity</div>',
         unsafe_allow_html=True,
     )
     st.markdown(
@@ -1146,9 +1130,9 @@ elif st.session_state.page == "survey":
     beh_subscore = calc_subscore(beh_q1, beh_q2, beh_q3, beh_q4)
     subscore_bar("📱", "Behavioural Intensity", beh_subscore)
 
-    # ── SECTION B: Psychological Distress ─────────────────────────────────────
+    #SECTION C: Psychological Distress
     st.markdown(
-        '<div class="section-header">🧠 Section B — Psychological Distress</div>',
+        '<div class="section-header">🧠 Section C — Psychological Distress</div>',
         unsafe_allow_html=True,
     )
     st.markdown(
@@ -1178,9 +1162,9 @@ elif st.session_state.page == "survey":
     psy_subscore = calc_subscore(psy_q1, psy_q2, psy_q3, psy_q4, psy_q5)
     subscore_bar("🧠", "Psychological Distress", psy_subscore)
 
-    # ── SECTION C: Sleep Disturbance ──────────────────────────────────────────
+    #SECTION D: Sleep Disturbance
     st.markdown(
-        '<div class="section-header">😴 Section C — Sleep Disturbance</div>',
+        '<div class="section-header">😴 Section D — Sleep Disturbance</div>',
         unsafe_allow_html=True,
     )
     st.markdown(
@@ -1208,9 +1192,9 @@ elif st.session_state.page == "survey":
     slp_subscore = calc_subscore(slp_q1, slp_q2, slp_q3, slp_q4)
     subscore_bar("😴", "Sleep Disturbance", slp_subscore)
 
-    # ── SECTION D: Usage Pattern ───────────────────────────────────────────────
+    #SECTION E: Usage Pattern
     st.markdown(
-        '<div class="section-header">⏰ Section D — Usage Pattern</div>',
+        '<div class="section-header">⏰ Section E — Usage Pattern</div>',
         unsafe_allow_html=True,
     )
     st.markdown(
@@ -1238,9 +1222,9 @@ elif st.session_state.page == "survey":
     usg_subscore = calc_subscore(usg_q1, usg_q2, usg_q3, usg_q4)
     subscore_bar("⏰", "Usage Pattern", usg_subscore)
 
-    # ── SECTION E: Academic Impact ────────────────────────────────────────────
+    #SECTION F: Academic Impact
     st.markdown(
-        '<div class="section-header">📚 Section E — Academic & Concentration Impact</div>',
+        '<div class="section-header">📚 Section F — Academic & Concentration Impact</div>',
         unsafe_allow_html=True,
     )
     st.markdown(
@@ -1271,7 +1255,7 @@ elif st.session_state.page == "survey":
 
     st.markdown('<hr class="section-divider">', unsafe_allow_html=True)
 
-    # ── Submit ────────────────────────────────────────────────────────────────
+    #Submit
     col_b1, col_b2, col_b3 = st.columns([1.5, 4, 1.5])
     with col_b2:
         submitted = st.button("🔍  Analyse My Risk", type="primary", use_container_width=True)
@@ -1326,9 +1310,8 @@ elif st.session_state.page == "survey":
             go("about")
 
 
-# ═════════════════════════════════════════════════════════════════════════════
+
 # PAGE 3 — RESULTS
-# ═════════════════════════════════════════════════════════════════════════════
 elif st.session_state.page == "results":
 
     result = st.session_state.get("result")
@@ -1352,7 +1335,7 @@ elif st.session_state.page == "results":
     confidence = probs.get(pred_label, 1.0)
 
 
-    # ── Result banner ─────────────────────────────────────────────────────────
+    #Result banner
     st.markdown(f"""
     <div class="result-banner" style="{risk_bg}">
       <h2 style="color:{risk_color}">{risk_emoji} {pred_label} Addiction Risk</h2>
@@ -1362,7 +1345,7 @@ elif st.session_state.page == "results":
     </div>
     """, unsafe_allow_html=True)
 
-    # ── Continuous addiction score (regression branch) ────────────────────────
+    #Continuous addiction score (regression branch)
     if reg_score is not None:
         score_color = "#34d399" if reg_score <= 4 else ("#fbbf24" if reg_score <= 6 else "#f87171")
         fill_pct = int((reg_score - 1) / 9 * 100)
@@ -1390,7 +1373,7 @@ elif st.session_state.page == "results":
         </div>
         """, unsafe_allow_html=True)
         
-    # ── CHART 1: Class probabilities ──────────────────────────────────────────
+    #CHART 1: Class probabilities
     st.markdown("### 📈 Model Class Probabilities")
     st.markdown(
         '<p style="font-size:.82rem;color:var(--text-muted);margin-top:-.4rem;margin-bottom:.8rem">'
@@ -1401,7 +1384,7 @@ elif st.session_state.page == "results":
 
     st.markdown('<hr class="section-divider">', unsafe_allow_html=True)
 
-    # ── CHART 2: Feature driver (z-score) ─────────────────────────────────────
+    #CHART 2: Feature driver (z-score)
     st.markdown("### 🔎 What Is Driving Your Prediction")
     stats_source = class_cond_stats if USING_COMPUTED_STATS else FALLBACK_CLASS_COND_STATS
     driver_png, used_computed = chart_driver_analysis(feat_vals, pred_label, stats_source)
@@ -1468,7 +1451,7 @@ elif st.session_state.page == "results":
 
     st.markdown('<hr class="section-divider">', unsafe_allow_html=True)
 
-    # ── Diagnostic subscores ──────────────────────────────────────────────────
+    #Diagnostic subscores
     st.markdown("### 🧮 Questionnaire Subscores")
     st.markdown(
         '<p style="font-size:.82rem;color:var(--text-muted);margin-top:-.4rem;margin-bottom:.8rem">'
@@ -1496,7 +1479,7 @@ elif st.session_state.page == "results":
 
     st.markdown('<hr class="section-divider">', unsafe_allow_html=True)
 
-    # ── Interpretation ────────────────────────────────────────────────────────
+    #Interpretation
     INTERP = {
         "Low": (
             "🌱 Your social media habits appear healthy.",
@@ -1530,7 +1513,7 @@ elif st.session_state.page == "results":
 
     st.markdown('<hr class="section-divider">', unsafe_allow_html=True)
 
-    # ── Recommendations ───────────────────────────────────────────────────────
+    #Recommendations
     st.markdown("### 💡 Recommendations")
     RECS = {
         "Low": [
@@ -1565,7 +1548,7 @@ elif st.session_state.page == "results":
 
     st.markdown('<hr class="section-divider">', unsafe_allow_html=True)
 
-    # ── Inputs + features expander ────────────────────────────────────────────
+    #Inputs + features expander
     with st.expander("📋 View submitted inputs, engineered features, and subscores"):
         col_exp1, col_exp2 = st.columns(2)
         with col_exp1:
@@ -1591,7 +1574,7 @@ elif st.session_state.page == "results":
             )
             st.table(prob_df)
 
-    # ── Navigation ────────────────────────────────────────────────────────────
+    #Navigation
     st.markdown("<br>", unsafe_allow_html=True)
     c1, c2, c3 = st.columns([2, 3, 2])
     with c1:
@@ -1601,7 +1584,7 @@ elif st.session_state.page == "results":
         if st.button("🏠 Home", use_container_width=True):
             go("about")
 
-    # ── Download Diagnostic Report ────────────────────────────────────────────
+    #Download Diagnostic Report
     st.markdown("<br>", unsafe_allow_html=True)
     st.markdown("### 📄 Download Your Diagnostic Report")
     st.markdown(

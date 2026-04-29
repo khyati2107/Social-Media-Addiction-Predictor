@@ -1,11 +1,7 @@
 """
 02_clean_datasets.py
-Purpose: Clean both datasets independently.
-- Standardise column names to lowercase_snake_case
-- Type-cast, strip whitespace, recode categoricals
-- Map Souvik's ordinal text responses to numeric scales
-- Drop non-SM-users from Souvik (Q6 == 'No')
-- Save cleaned CSVs
+Purpose: Clean both datasets independently nd standardise column names to lowercase_snake_case, type-cast, strip whitespace, recode categoricals
+Map Souvik's ordinal text responses to numeric scales Drop non-SM-users from Souvik (Q6 == 'No'), Save cleaned CSVs
 """
 
 import pandas as pd
@@ -14,13 +10,13 @@ import os
 
 os.makedirs("outputs", exist_ok=True)
 
-# ── Helpers ───────────────────────────────────────────────────────────────────
+#Helpers
 def to_snake(s):
     s = re.sub(r'[^\w\s]', '', str(s))
     s = re.sub(r'\s+', '_', s.strip().lower())
     return s
 
-# ── NUSRATT ───────────────────────────────────────────────────────────────────
+#NUSRATT 
 n = pd.read_csv("Nusratt.csv")
 n.columns = [to_snake(c) for c in n.columns]
 
@@ -37,7 +33,7 @@ n = n.rename(columns={
     "academic_level":               "academic_level",
 })
 
-# Drop student_id — not a feature
+# Drop student_id  not a feature
 n = n.drop(columns=["student_id"], errors="ignore")
 
 # Enforce numeric
@@ -67,10 +63,10 @@ print(n["addiction_label"].value_counts())
 n.to_csv("outputs/nusratt_clean.csv", index=False)
 
 
-# ── SOUVIK ────────────────────────────────────────────────────────────────────
+#SOUVIK
 s = pd.read_csv("Souvik.csv")
 
-# Rename columns to short snake_case
+#Rename columns to short snake_case
 col_map = {
     "Timestamp":                                                                       "timestamp",
     "1. What is your age?":                                                            "age",
@@ -96,7 +92,7 @@ col_map = {
 }
 s = s.rename(columns=col_map)
 
-# Keep only SM users (Q6 == 'Yes')
+#Keep only SM users (Q6 == 'Yes')
 s = s[s["uses_sm"].str.strip().str.title() == "Yes"].copy()
 
 # Map text usage to numeric hours (midpoint approximation)
@@ -110,7 +106,7 @@ usage_map = {
 }
 s["avg_daily_usage_hours"] = s["avg_daily_usage_text"].map(usage_map)
 
-# Enforce numeric Likert columns
+#Enforce numeric Likert columns
 likert_cols = [
     "purposeless_use","distraction_busy","restlessness",
     "easily_distracted","bothered_by_worries","concentration_difficulty",
@@ -122,14 +118,14 @@ for col in likert_cols:
 
 s["age"] = pd.to_numeric(s["age"], errors="coerce")
 
-# Standardise gender — collapse Nonbinary / others → "Other"
+#Standardise gender — collapse Nonbinary or others → "Other"
 def norm_gender(g):
     g = str(g).strip().title()
     if g in ("Male","Female"): return g
     return "Other"
 s["gender"] = s["gender"].apply(norm_gender)
 
-# Standardise relationship_status
+#Standardise relationship_status
 def norm_rel(r):
     r = str(r).strip().title()
     mapping = {
@@ -139,7 +135,7 @@ def norm_rel(r):
     return mapping.get(r, r)
 s["relationship_status"] = s["relationship_status"].apply(norm_rel)
 
-# Drop rows with missing usage hours (can't impute intent)
+#Drop rows with missing usage hours 
 s = s.dropna(subset=["avg_daily_usage_hours"])
 s = s.reset_index(drop=True)
 

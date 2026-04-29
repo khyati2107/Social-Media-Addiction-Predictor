@@ -1,7 +1,7 @@
 """
 03_column_mapping.py
 Purpose: Build the explicit Nusratt ↔ Souvik feature mapping table.
-Categories: direct_match | proxy_match | no_match
+Categories: direct_match or proxy_match or no_match
 Output: outputs/column_mapping.csv, outputs/proxy_mapping_report.txt
 """
 
@@ -11,7 +11,7 @@ import os
 os.makedirs("outputs", exist_ok=True)
 
 mapping = [
-    # Nusratt column          | Souvik column(s)            | match_type  | notes
+    # Nusratt column           Souvik column(s)             match_type  notes
     ("age",                    "age",                        "direct",
      "Both numeric age"),
     ("gender",                 "gender",                     "direct",
@@ -65,7 +65,7 @@ df_map = pd.DataFrame(mapping, columns=[
 ])
 df_map.to_csv("outputs/column_mapping.csv", index=False)
 
-# Shared features to engineer (both sides must have inputs, no mixing)
+#Shared features to engineer (both sides must have inputs, no mixing)
 shared_direct = df_map[df_map["match_type"] == "direct"]["nusratt_column"].dropna().tolist()
 shared_proxy  = df_map[df_map["match_type"] == "proxy"]["nusratt_column"].dropna().tolist()
 
@@ -78,19 +78,6 @@ Direct matches (usable as-is after harmonisation):
 Proxy matches (engineered or approximated):
 {chr(10).join('  - ' + c for c in shared_proxy)}
 
-ASSUMPTIONS & LIMITATIONS:
-1. avg_daily_usage_hours: Souvik midpoints introduce binning noise (~±0.5h).
-2. sleep_issue_score is NOT sleep duration. It measures sleep disturbance (1-5).
-   It is used as a proxy only, never converted to sleep hours.
-3. mental_health_proxy (Souvik) = mean(depression_freq, bothered_by_worries),
-   rescaled 1-10. This is a rough proxy; Nusratt MH score may include more dimensions.
-4. platform_diversity_score (Souvik) = count of platforms in Q7.
-   Nusratt has a single platform; diversity score cannot be computed the same way.
-   Therefore platform features are excluded from the shared model.
-5. is_student flag: Nusratt academic_level mapped; Souvik occupation_status mapped.
-   Both have sufficient student coverage for a binary flag.
-6. Souvik has no ground-truth addiction labels. Proxy labels are created separately
-   in 06_evaluate_classification.py for reference only and never used in model training.
 """
 
 with open("outputs/proxy_mapping_report.txt","w") as f:

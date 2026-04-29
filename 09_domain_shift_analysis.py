@@ -1,10 +1,7 @@
 """
 09_domain_shift_analysis.py
-Purpose: Explicit domain shift analysis between Nusratt train and Souvik.
-- Mann-Whitney U and KS tests for numeric features
-- Categorical distribution comparisons
-- Domain shift report
-- Distribution plots
+Purpose: Explicit domain shift analysis between Nusratt train and Souvik. ,Mann-Whitney U and KS tests for numeric features
+, categorical distribution comparisons, domain shift report, distribution plots
 """
 
 import pandas as pd
@@ -20,7 +17,7 @@ import seaborn as sns
 
 from scipy.stats import ks_2samp, mannwhitneyu
 
-# ── Load feature matrices ─────────────────────────────────────────────────────
+#Load feature matrices
 train = pd.read_csv("outputs/features_train.csv")
 souv  = pd.read_csv("outputs/features_souvik.csv")
 
@@ -29,7 +26,7 @@ FEAT_COLS = [c for c in train.columns if c not in ("addiction_label","addicted_s
 X_train = train[FEAT_COLS]
 X_souv  = souv[FEAT_COLS]
 
-# ── Numeric statistical tests ─────────────────────────────────────────────────
+#Numeric statistical tests
 print("\nDOMAIN SHIFT ANALYSIS — Numeric Features")
 print("="*60)
 shift_results = []
@@ -53,7 +50,7 @@ for col in FEAT_COLS:
 df_shift = pd.DataFrame(shift_results)
 df_shift.to_csv("outputs/domain_shift_stats.csv", index=False)
 
-# ── Distribution plots ────────────────────────────────────────────────────────
+#Distribution plots
 n_feats = len(FEAT_COLS)
 fig, axes = plt.subplots(2, 3, figsize=(14, 8))
 axes = axes.flatten()
@@ -70,7 +67,7 @@ plt.tight_layout()
 plt.savefig("outputs/domain_shift_distributions.png", dpi=120)
 plt.close()
 
-# ── Categorical comparison from RAW cleaned datasets ─────────────────────────
+#Categorical comparison from RAW cleaned datasets
 n_raw = pd.read_csv("outputs/nusratt_clean.csv")
 s_raw = pd.read_csv("outputs/souvik_clean.csv")
 
@@ -87,7 +84,7 @@ for col, scol in [("gender","gender"), ("relationship_status","relationship_stat
 cat_df = pd.concat(cat_report)
 cat_df.to_csv("outputs/domain_shift_categorical.csv")
 
-# ── Domain shift summary report ───────────────────────────────────────────────
+#Domain shift summary report
 shifted = df_shift[df_shift["significant_shift"]]
 not_shifted = df_shift[~df_shift["significant_shift"]]
 
@@ -103,8 +100,8 @@ STABLE FEATURES (no significant shift):
 {not_shifted[['feature','train_mean','souvik_mean','ks_p','mw_p']].to_string(index=False) if len(not_shifted)>0 else '  None'}
 
 INTERPRETATION:
-- Shifted features indicate the Souvik population differs from Nusratt on those constructs.
-- This is the primary source of OOD performance drop in classification evaluation.
+- Shifted features indicate the Souvik population differs from Nusratt on those constructs, this is the primary source of OOD 
+performance drop in classification evaluation.
 - Features derived from proxy variables (psychological_distress_index, sleep_disturbance_proxy)
   are particularly susceptible to shift because they are constructed from different instruments.
 - Shifted features do NOT invalidate the model; they explain the performance gap.

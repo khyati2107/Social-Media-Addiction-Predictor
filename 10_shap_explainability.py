@@ -1,10 +1,7 @@
 """
 10_shap_explainability.py
-Purpose: SHAP explainability for tree-based and linear models.
-- Global SHAP summary plots (bar + beeswarm per class)
-- Feature importance ranking table
-- Local waterfall explanation examples
-- Robust fallback ladders for XGBoost and Logistic Regression
+Purpose: SHAP explainability for tree-based and linear models, global SHAP summary plots (bar + beeswarm per class)
+,feature importance ranking table ,local waterfall explanation examples, robust fallback ladders for XGBoost and Logistic Regression
 """
 
 import pandas as pd
@@ -18,7 +15,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import shap
 
-# ── Load ──────────────────────────────────────────────────────────────────────
+#Load
 train     = pd.read_csv("outputs/features_train.csv")
 test      = pd.read_csv("outputs/features_test.csv")
 FEAT_COLS = pickle.load(open("models/feature_cols.pkl", "rb"))
@@ -39,10 +36,8 @@ n_classes    = len(classes)
 TARGET_CLASS = 0                 # 'High' used for local waterfall plots
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# HELPERS
-# ══════════════════════════════════════════════════════════════════════════════
 
+# HELPERS
 def normalise_shap(shap_values, n_cls):
     """
     Normalise any SHAP output into list[class_idx] -> array(n_samples, n_feats).
@@ -140,8 +135,7 @@ def builtin_importance_fallback(model, prefix, label):
 def kernel_explainer_fallback(model_fn, X_train_bg, X_test_local,
                                label, prefix, n_bg=50, n_test=50):
     """
-    KernelExplainer fallback — model-agnostic, works with any classifier.
-    Uses a small background and test slice for speed.
+    KernelExplainer fallback — model-agnostic, works with any classifier. Uses a small background and test slice for speed.
     """
     print(f"  Trying KernelExplainer for {label} (bg={n_bg}, test={n_test})...")
     background = shap.sample(X_train_bg, n_bg, random_state=42)
@@ -153,9 +147,8 @@ def kernel_explainer_fallback(model_fn, X_train_bg, X_test_local,
     return sv_list, explainer, X_slice
 
 
-# ══════════════════════════════════════════════════════════════════════════════
+
 # 1. RANDOM FOREST  (TreeExplainer — reliable for sklearn RF)
-# ══════════════════════════════════════════════════════════════════════════════
 print("Computing SHAP for Random Forest...")
 explainer_rf = shap.TreeExplainer(rf)
 sv_rf        = normalise_shap(
@@ -166,12 +159,12 @@ save_waterfall_plots(sv_rf, explainer_rf, X_test_df, label="RF", prefix="rf")
 print("  RF SHAP done.")
 
 
-# ══════════════════════════════════════════════════════════════════════════════
+
 # 2. XGBOOST — three-level fallback ladder
 #   L1: shap.Explainer (universal)
 #   L2: KernelExplainer
 #   L3: built-in feature_importances_
-# ══════════════════════════════════════════════════════════════════════════════
+
 print("Computing SHAP for XGBoost...")
 
 sv_xgb        = None
@@ -229,14 +222,11 @@ else:
     print("  XGB: built-in importances saved (SHAP version incompatibility).")
 
 
-# ══════════════════════════════════════════════════════════════════════════════
+
 # 3. LOGISTIC REGRESSION — two-level fallback ladder
-#
 #   L1: LinearExplainer with feature_perturbation="interventional"
-#       (avoids the covariance path that causes the index-out-of-bounds crash
-#        with feature_perturbation="correlation_dependent")
 #   L2: KernelExplainer (model-agnostic, guaranteed to work)
-# ══════════════════════════════════════════════════════════════════════════════
+
 print("Computing SHAP for Logistic Regression...")
 
 sv_lr        = None
@@ -282,10 +272,10 @@ else:
     print("  LR SHAP could not be computed. Skipping LR plots.")
 
 
-# ══════════════════════════════════════════════════════════════════════════════
+
 # 4. FEATURE IMPORTANCE RANKING TABLE
 #    RF mean |SHAP| (primary) + XGB if available
-# ══════════════════════════════════════════════════════════════════════════════
+
 mean_abs_rf = np.mean(
     [np.abs(sv).mean(axis=0) for sv in sv_rf], axis=0
 )
@@ -323,9 +313,9 @@ print("\nFeature importance ranking (mean |SHAP| across classes):")
 print(importance_df.to_string(index=False))
 
 
-# ══════════════════════════════════════════════════════════════════════════════
+
 # 5. LIMITATIONS REPORT
-# ══════════════════════════════════════════════════════════════════════════════
+
 xgb_note = (
     f"XGBoost SHAP computed via {xgb_method}."
     if xgb_method != "builtin_fallback"
@@ -344,9 +334,7 @@ limitations = f"""
 LIMITATIONS REPORT
 ==================
 1. Souvik has no ground-truth addiction labels. All Souvik evaluation uses proxy
-   labels derived from usage hours only. These must not be interpreted as
-   validated outcomes.
-
+   labels derived from usage hours only. 
 2. Sleep constructs are incompatible across datasets:
    - Nusratt: sleep_hours_per_night (objective duration)
    - Souvik:  sleep_issue_score (subjective disturbance, 1-5 Likert)
@@ -385,4 +373,4 @@ with open("outputs/limitations_report.txt", "w") as f:
     f.write(limitations)
 
 print(limitations)
-print("\n✓ All SHAP outputs saved. Pipeline complete.")
+print("\n All SHAP outputs saved. Pipeline complete.")

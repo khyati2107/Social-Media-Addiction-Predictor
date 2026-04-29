@@ -1,28 +1,20 @@
 """
 04_feature_engineering_shared.py
-Purpose:
-  - Derive engineered features from Nusratt TRAINING split only
-  - Apply same logic to Nusratt test and Souvik
-  - Use only transferable features (inputs available in both datasets)
-  - No mixing of direct and proxy variables inside the same feature
-  - 5–7 compact engineered features maximum
-  - Save shared feature datasets
+Purpose: Derive engineered features from Nusratt TRAINING split only, apply same logic to Nusratt test and Souvik, use only 
+transferable features (inputs available in both datasets), no mixing of direct and proxy variables inside the same feature, 5-7 compact engineered features maximum, 
+save shared feature datasets
 
 SHARED ENGINEERED FEATURES (6 total):
-  1. behavioral_intensity_index   — usage + conflicts (both direct on Nusratt; usage direct + purposeless_use proxy on Souvik)
-     NOTE: conflicts ↔ purposeless_use is a proxy match. This feature uses ONE proxy variable only.
-  2. psychological_distress_index — mental_health_score proxy (depression_freq + bothered_by_worries on Souvik)
-     Pure proxy construction, consistent across both sides.
-  3. sleep_disturbance_proxy      — sleep_issue_score (Souvik Q20) / rescaled sleep_hours inverse (Nusratt)
-     Both treated as sleep disturbance proxies.
-  4. age_norm                     — direct match, normalised
-  5. is_student                   — direct proxy flag
-  6. usage_hours_sq               — squared usage (non-linear interaction) — direct input
+  1. behavioral_intensity_index   - usage + conflicts (both direct on Nusratt; usage direct + purposeless_use proxy on Souvik)
+  2. psychological_distress_index - mental_health_score proxy (depression_freq + bothered_by_worries on Souvik)
+  3. sleep_disturbance_proxy      - sleep_issue_score (Souvik Q20) / rescaled sleep_hours inverse (Nusratt)
+  4. age_norm - direct match, normalised
+  5. is_student- direct proxy flag
+  6. usage_hours_sq- squared usage (non-linear interaction) — direct input
 
-NOT INCLUDED (would mix direct+proxy or unavailable in Nusratt):
-  - social_comparison_index (Souvik Q15 has no Nusratt match)
-  - distraction_concentration_index (Souvik Q12/Q14 have no Nusratt equivalent)
-  - emotional_vulnerability_index (Q19 not in Nusratt)
+Not included:
+social_comparison_index (Souvik Q15 has no Nusratt match), distraction_concentration_index (Souvik Q12/Q14 have no Nusratt equivalent)
+, emotional_vulnerability_index (Q19 not in Nusratt)
 """
 
 import pandas as pd
@@ -34,11 +26,11 @@ from sklearn.impute import SimpleImputer
 os.makedirs("outputs", exist_ok=True)
 os.makedirs("models",  exist_ok=True)
 
-# ── Load cleaned data ─────────────────────────────────────────────────────────
+#Load cleaned data
 n = pd.read_csv("outputs/nusratt_clean.csv")
 s = pd.read_csv("outputs/souvik_clean.csv")
 
-# ── Train/test split (stratified) — MUST happen BEFORE any fitting ───────────
+#Train/test split (stratified) — MUST happen BEFORE any fitting
 from sklearn.model_selection import train_test_split
 
 X_all = n.copy()
@@ -55,10 +47,9 @@ print(f"Nusratt train: {n_train.shape}, test: {n_test.shape}")
 print("Train label dist:\n", n_train["addiction_label"].value_counts())
 
 
-# ══════════════════════════════════════════════════════════════════════════════
+
 # FEATURE ENGINEERING FUNCTIONS
 # All parameters (clip bounds, scale ranges) are derived from n_train only.
-# ══════════════════════════════════════════════════════════════════════════════
 
 def make_nusratt_features(df, params=None, fit=False):
     """
@@ -192,13 +183,13 @@ def make_souvik_features(df, params):
     return d[feature_cols]
 
 
-# ── Fit on training split ─────────────────────────────────────────────────────
+#Fit on training split
 params = {}
 X_train_feats, params = make_nusratt_features(n_train, params, fit=True)
 X_test_feats,  _      = make_nusratt_features(n_test,  params, fit=False)
 X_souvik_feats        = make_souvik_features(s, params)
 
-# ── Impute residual NaNs (median from train) ──────────────────────────────────
+#Impute residual NaNs (median from train)
 imputer = SimpleImputer(strategy="median")
 X_train_feats = pd.DataFrame(
     imputer.fit_transform(X_train_feats),
@@ -213,13 +204,13 @@ X_souvik_feats = pd.DataFrame(
     columns=X_souvik_feats.columns
 )
 
-# ── Attach labels ─────────────────────────────────────────────────────────────
+#Attach labels
 X_train_feats["addiction_label"] = n_train["addiction_label"].values
 X_train_feats["addicted_score"]  = n_train["addicted_score"].values
 X_test_feats["addiction_label"]  = n_test["addiction_label"].values
 X_test_feats["addicted_score"]   = n_test["addicted_score"].values
 
-# ── Save ──────────────────────────────────────────────────────────────────────
+#Save
 X_train_feats.to_csv("outputs/features_train.csv", index=False)
 X_test_feats.to_csv("outputs/features_test.csv",   index=False)
 X_souvik_feats.to_csv("outputs/features_souvik.csv", index=False)
