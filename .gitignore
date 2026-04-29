@@ -10,11 +10,14 @@ models/
 __pycache__/
 *.pyc
 *.pyo
+
+# Model files (optional – keep only if you DON'T want to push them)
 *.pkl
 
 # Virtual environments
 venv/
 env/
+myenv/
 .env
 
 # OS files
@@ -22,4 +25,4 @@ env/
 Thumbs.db
 
 # Jupyter
-.ipynb_checkpoints/myenv/ 
+.ipynb_checkpoints/
