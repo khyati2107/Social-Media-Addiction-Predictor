@@ -26,4 +26,4 @@ for script in scripts:
         print(f"ERROR in {script}. Stopping.")
         sys.exit(1)
 
-print("\n✓ Full pipeline completed successfully.")
+print("\n Full pipeline completed successfully.")

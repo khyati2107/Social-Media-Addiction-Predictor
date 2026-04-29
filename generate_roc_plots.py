@@ -1,7 +1,7 @@
 """
 generate_roc_plots.py
-Generates ROC curve plots (one-vs-rest, per class) for all 4 classifiers
-on the Nusratt test set. Saves individual model plots + a combined comparison.
+Generates ROC curve plots (one-vs-rest, per class) for all 4 classifiers on the Nusratt test set.
+ Saves individual model plots + a combined comparison.
 """
 
 import pandas as pd
@@ -16,7 +16,7 @@ import os
 
 os.makedirs("outputs", exist_ok=True)
 
-# ── Load ──────────────────────────────────────────────────────────────────────
+#Load
 test      = pd.read_csv("outputs/features_test.csv")
 FEAT_COLS = pickle.load(open("models/feature_cols.pkl", "rb"))
 scaler    = pickle.load(open("models/scaler_clf.pkl", "rb"))
@@ -37,7 +37,7 @@ model_colors = {"LR": "#4361EE", "RF": "#F77F00", "XGB": "#7B2D8B", "SVM": "#2EC
 models = {label: pickle.load(open(f"models/clf_{fname}.pkl", "rb"))
           for label, fname in model_names.items()}
 
-# ── 1. Per-model ROC (one plot per model, all 3 classes) ─────────────────────
+#1. Per-model ROC (one plot per model, all 3 classes)
 for model_label, model in models.items():
     y_prob = model.predict_proba(X_test)
 
@@ -52,7 +52,7 @@ for model_label, model in models.items():
                 color=colors_per_class[cls],
                 label=f"Class: {cls}  (AUC = {roc_auc:.3f})")
 
-    # Macro average
+    #Macro average
     all_fpr = np.unique(np.concatenate([
         roc_curve(y_test_bin[:, i], y_prob[:, i])[0] for i in range(n_classes)
     ]))
@@ -78,7 +78,7 @@ for model_label, model in models.items():
     plt.close()
     print(f"Saved: outputs/roc_{model_label}_nusratt.png  (Macro AUC={macro_auc:.3f})")
 
-# ── 2. Combined: Macro ROC for all 4 models on one chart ─────────────────────
+#2. Combined: Macro ROC for all 4 models on one chart
 fig, ax = plt.subplots(figsize=(7, 6))
 ax.set_facecolor("#F8F9FA")
 fig.patch.set_facecolor("white")
@@ -111,7 +111,7 @@ plt.savefig("outputs/roc_all_models_combined.png", dpi=150)
 plt.close()
 print("Saved: outputs/roc_all_models_combined.png")
 
-# ── 3. 2x2 grid: per-model, all classes (paper-ready figure) ─────────────────
+# 3. 2x2 grid: per-model, all classes (paper-ready figure)
 fig, axes = plt.subplots(2, 2, figsize=(12, 10))
 fig.suptitle("ROC Curves by Model — Nusratt Test Set (One-vs-Rest)", fontsize=14, fontweight="bold")
 
