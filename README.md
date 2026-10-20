@@ -14,7 +14,7 @@ Associated IEEE paper submitted as part of coursework at BITS Pilani Dubai Campu
 | Srinjita Roy Chowdhury | Computer Science | BITS Pilani Dubai |
 | Soorya Kiran Kakkarayil | Computer Science | BITS Pilani Dubai |
 
-🏫 **Birla Institute of Technology and Science, Pilani — Dubai Campus*
+🏫 **Birla Institute of Technology and Science, Pilani — Dubai Campus**
 
 ---
 
