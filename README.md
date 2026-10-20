@@ -1,4 +1,4 @@
-# 📱 Social Media Addiction Predictor
+# Social Media Addiction Predictor
 
 A behavioral-psychological machine learning system that analyzes user habits and mental health indicators to classify social media addiction risk as Low / Moderate / High — complemented by a continuous regression branch that predicts a nuanced addiction score from 1–10. Features explainable AI (SHAP) and a deployed Streamlit web application.
 
@@ -6,7 +6,7 @@ Associated IEEE paper submitted as part of coursework at BITS Pilani Dubai Campu
 
 ---
 
-## 👥 Authors
+## Authors
 
 | Name | Department | Institution |
 |------|-----------|-------------|
